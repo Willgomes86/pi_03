@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Repasses | Colo de Mãe{% endblock %}
+
+{% block content %}
+  <section class="card-soft p-4 mb-4">
+    <h1 class="h4 mb-1">Registro de Repasses</h1>
+    <p class="text-secondary mb-0">Controle a saída de recursos para famílias com histórico auditável.</p>
+  </section>
+
+  <section class="row g-3">
+    <div class="col-lg-5">
+      <div class="card-soft p-3">
+        <h2 class="h5 mb-3">Novo repasse</h2>
+
+        {% if form.errors %}
+          <div class="alert alert-danger">Revise os campos destacados.</div>
+        {% endif %}
+
+        <form method="post" action="{% url 'repasses' %}">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.familia.id_for_label }}">Família</label>
+            {{ form.familia }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.doacao.id_for_label }}">Doação de origem (opcional)</label>
+            {{ form.doacao }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.categoria.id_for_label }}">Categoria</label>
+            {{ form.categoria }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.descricao.id_for_label }}">Descrição</label>
+            {{ form.descricao }}
+          </div>
+          <div class="row g-2">
+            <div class="col-md-6 mb-3">
+              <label class="form-label" for="{{ form.valor_estimado.id_for_label }}">Valor estimado (R$)</label>
+              {{ form.valor_estimado }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label" for="{{ form.data_repasse.id_for_label }}">Data do repasse</label>
+              {{ form.data_repasse }}
+            </div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-6 mb-3">
+              <label class="form-label" for="{{ form.quantidade.id_for_label }}">Quantidade</label>
+              {{ form.quantidade }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label" for="{{ form.unidade.id_for_label }}">Unidade</label>
+              {{ form.unidade }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+            {{ form.status }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
+            {{ form.observacoes }}
+          </div>
+
+          <button class="btn btn-brand w-100" type="submit">Registrar repasse</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card-soft p-3">
+        <h2 class="h5 mb-3">Últimos repasses</h2>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Família</th>
+                <th>Categoria</th>
+                <th>Status</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in ultimos_repasses %}
+                <tr>
+                  <td>{{ item.data_repasse|date:"d/m/Y" }}</td>
+                  <td>{{ item.familia.lider_familia }}</td>
+                  <td>{{ item.get_categoria_display }}</td>
+                  <td>{{ item.get_status_display }}</td>
+                  <td>{% if item.valor_estimado %}R$ {{ item.valor_estimado|floatformat:2 }}{% else %}-{% endif %}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="text-muted">Nenhum repasse registrado ainda.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+

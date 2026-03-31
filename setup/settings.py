@@ -1,5 +1,7 @@
 import os
+import sys
 from pathlib import Path
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,7 +46,8 @@ load_env_file(BASE_DIR / ".env")
 SECRET_KEY = env_str("SECRET_KEY", "django-insecure-change-me")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env_bool("DEBUG", default=False)
+# Para desenvolvimento local, deixamos True como padrão.
+DEBUG = env_bool("DEBUG", default=True)
 
 ALLOWED_HOSTS = [
     host.strip()
@@ -82,7 +85,7 @@ ROOT_URLCONF = "setup.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": ["cadastros.templates"],
+        "DIRS": [BASE_DIR / "cadastros" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -100,12 +103,25 @@ WSGI_APPLICATION = "setup.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 #
-# Usa PostgreSQL quando as variáveis de ambiente estão definidas.
-# Em desenvolvimento local, cai para SQLite para evitar erro 500
-# ao acessar páginas que consultam o banco.
+# Regra:
+# - Ambiente normal: PostgreSQL obrigatório.
+# - Testes (manage.py test): SQLite.
+RUNNING_TESTS = "test" in sys.argv
 db_name = env_str("DB_NAME", "")
 
-if db_name:
+if RUNNING_TESTS:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "test_db.sqlite3",
+        }
+    }
+else:
+    if not db_name:
+        raise ImproperlyConfigured(
+            "DB_NAME é obrigatório. Este sistema usa PostgreSQL em execução normal."
+        )
+
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -114,13 +130,6 @@ if db_name:
             "PASSWORD": env_str("DB_PASSWORD", ""),
             "HOST": env_str("DB_HOST", "localhost"),
             "PORT": env_str("DB_PORT", "5432"),
-        }
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
         }
     }
 

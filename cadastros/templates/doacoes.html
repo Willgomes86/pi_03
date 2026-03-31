@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Doações | Colo de Mãe{% endblock %}
+
+{% block content %}
+  <section class="card-soft p-4 mb-4">
+    <h1 class="h4 mb-1">Registro de Doações</h1>
+    <p class="text-secondary mb-0">Cadastre entrada de recursos financeiros e itens para controle de estoque social.</p>
+  </section>
+
+  <section class="row g-3">
+    <div class="col-lg-5">
+      <div class="card-soft p-3">
+        <h2 class="h5 mb-3">Nova doação</h2>
+
+        {% if form.errors %}
+          <div class="alert alert-danger">Revise os campos destacados.</div>
+        {% endif %}
+
+        <form method="post" action="{% url 'doacoes' %}">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.doador.id_for_label }}">Doador</label>
+            {{ form.doador }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.categoria.id_for_label }}">Categoria</label>
+            {{ form.categoria }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.descricao.id_for_label }}">Descrição</label>
+            {{ form.descricao }}
+          </div>
+          <div class="row g-2">
+            <div class="col-md-6 mb-3">
+              <label class="form-label" for="{{ form.valor.id_for_label }}">Valor (R$)</label>
+              {{ form.valor }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label" for="{{ form.data_doacao.id_for_label }}">Data da doação</label>
+              {{ form.data_doacao }}
+            </div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-6 mb-3">
+              <label class="form-label" for="{{ form.quantidade.id_for_label }}">Quantidade</label>
+              {{ form.quantidade }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label" for="{{ form.unidade.id_for_label }}">Unidade</label>
+              {{ form.unidade }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
+            {{ form.observacoes }}
+          </div>
+
+          <button class="btn btn-brand w-100" type="submit">Registrar doação</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card-soft p-3">
+        <h2 class="h5 mb-3">Últimas doações</h2>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Doador</th>
+                <th>Categoria</th>
+                <th>Descrição</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in ultimas_doacoes %}
+                <tr>
+                  <td>{{ item.data_doacao|date:"d/m/Y" }}</td>
+                  <td>{{ item.doador.nome|default:"Não informado" }}</td>
+                  <td>{{ item.get_categoria_display }}</td>
+                  <td>{{ item.descricao }}</td>
+                  <td>{% if item.valor %}R$ {{ item.valor|floatformat:2 }}{% else %}-{% endif %}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="text-muted">Nenhuma doação registrada ainda.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+

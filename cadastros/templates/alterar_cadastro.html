@@ -13,7 +13,7 @@
     {% endif %}
 
     <!-- Formulário de Busca -->
-    <form class="border rounded-3 bg-light" method="post" action="{% url 'alterar_cadastro' %}">
+    <form class="card-soft p-4 mb-4" method="post" action="{% url 'alterar_cadastro' %}">
         {% csrf_token %}
         <h3 class="text-center">Buscar Cadastro</h3>
         <hr>
@@ -33,7 +33,7 @@
     <!-- Formulário de Alteração -->
     {% if cadastros %}
         {% for cadastro in cadastros %}
-   <form class="p-4 p-md-5 border rounded-3 bg-light" action="{% url 'alterar_cadastro' %}" method="POST">
+   <form class="p-4 p-md-5 card-soft" action="{% url 'alterar_cadastro' %}" method="POST">
         {% csrf_token %}
         <h3 class="text-center">Alterar Cadastro</h3>
         <hr>
@@ -371,3 +371,4 @@
 </div>
 
 {% endblock %}
+

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Alterar Cadastro{% endblock %}
+{% block title %}Buscar Cadastro{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -14,7 +14,7 @@
     <!-- Formulário de Alteração -->
     {% if cadastros %}
         {% for cadastro in cadastros %}
-   <form class="p-4 p-md-5 border rounded-3 bg-light" action="{% url 'buscar_cadastro' %}" method="POST">
+   <form class="p-4 p-md-5 card-soft" action="{% url 'buscar_cadastro' %}" method="POST">
         {% csrf_token %}
         <hr>
 
@@ -352,3 +352,4 @@
 </div>
 
 {% endblock %}
+

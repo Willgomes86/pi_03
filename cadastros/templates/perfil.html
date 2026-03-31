@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Perfil | Colo de Mãe{% endblock %}
+
+{% block content %}
+  <section class="card-soft p-4 mb-4">
+    <h1 class="h4 mb-1">Meu perfil</h1>
+    <p class="text-secondary mb-0">Atualize seus dados de identificação no sistema.</p>
+  </section>
+
+  <section class="row justify-content-center">
+    <div class="col-lg-6">
+      <form method="post" class="card-soft p-4">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+          {{ form.first_name }}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+          {{ form.last_name }}
+        </div>
+        <div class="mb-4">
+          <label class="form-label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+          {{ form.email }}
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-brand flex-grow-1">Salvar alterações</button>
+          <a class="btn btn-outline-secondary flex-grow-1" href="{% url 'home' %}">Voltar</a>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}

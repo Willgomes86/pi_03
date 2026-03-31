@@ -1,14 +1,118 @@
 {% extends "base.html" %}
 
-{% block title %}Home - Colo de Mãe{% endblock %}
+{% block title %}Painel | Colo de Mãe{% endblock %}
 
 {% block content %}
-<div class="container-fluid bg-light border-rounded-3">
-  <h3 align="center">Bem-vindo a Colo de Mãe</h3>
-</div>
-<div class="container-fluid">
-  <div class="container-fluid bg-dark">
-  <p align="center"><font color="#faebd7"> Avisos</font></p>
-  </div>
-</div>
+  <section class="card-soft p-4 mb-4">
+    <h1 class="h3 mb-2">Painel da ONG Colo de Mãe</h1>
+    <p class="mb-0 text-secondary">
+      Acompanhe o ciclo completo: entrada de doações, repasse para famílias e saldo social disponível.
+    </p>
+  </section>
+
+  {% if user.is_authenticated and indicadores %}
+    <section class="row g-3 mb-4">
+      <article class="col-md-6 col-xl-4">
+        <div class="metric-card">
+          <span class="metric-label">Famílias cadastradas</span>
+          <span class="metric-value">{{ indicadores.total_familias }}</span>
+        </div>
+      </article>
+      <article class="col-md-6 col-xl-4">
+        <div class="metric-card">
+          <span class="metric-label">Doações registradas</span>
+          <span class="metric-value">{{ indicadores.total_doacoes }}</span>
+        </div>
+      </article>
+      <article class="col-md-6 col-xl-4">
+        <div class="metric-card">
+          <span class="metric-label">Repasses realizados</span>
+          <span class="metric-value">{{ indicadores.total_repasses }}</span>
+        </div>
+      </article>
+      <article class="col-md-6 col-xl-4">
+        <div class="metric-card">
+          <span class="metric-label">Total doado (R$)</span>
+          <span class="metric-value">{{ indicadores.valor_doado|floatformat:2 }}</span>
+        </div>
+      </article>
+      <article class="col-md-6 col-xl-4">
+        <div class="metric-card">
+          <span class="metric-label">Total repassado (R$)</span>
+          <span class="metric-value">{{ indicadores.valor_repassado|floatformat:2 }}</span>
+        </div>
+      </article>
+      <article class="col-md-6 col-xl-4">
+        <div class="metric-card">
+          <span class="metric-label">Saldo estimado (R$)</span>
+          <span class="metric-value">{{ indicadores.saldo|floatformat:2 }}</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="row g-3">
+      <div class="col-lg-6">
+        <div class="card-soft p-3 h-100">
+          <h2 class="h5 mb-3">Doações recentes</h2>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Categoria</th>
+                  <th>Doador</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in doacoes_recentes %}
+                  <tr>
+                    <td>{{ item.data_doacao|date:"d/m/Y" }}</td>
+                    <td>{{ item.get_categoria_display }}</td>
+                    <td>{{ item.doador.nome|default:"Não informado" }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="3" class="text-muted">Sem doações registradas.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card-soft p-3 h-100">
+          <h2 class="h5 mb-3">Repasses recentes</h2>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Família</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in repasses_recentes %}
+                  <tr>
+                    <td>{{ item.data_repasse|date:"d/m/Y" }}</td>
+                    <td>{{ item.familia.lider_familia }}</td>
+                    <td>{{ item.get_status_display }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="3" class="text-muted">Sem repasses registrados.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  {% else %}
+    <section class="card-soft p-4">
+      <p class="mb-0">
+        Faça login para visualizar indicadores e operar os fluxos de doações e repasses.
+      </p>
+    </section>
+  {% endif %}
 {% endblock %}
+

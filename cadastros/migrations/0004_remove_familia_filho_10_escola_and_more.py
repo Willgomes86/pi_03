@@ -5,6 +5,10 @@ import uuid
 from django.db import migrations, models
 
 
+def short_uuid():
+    return uuid.uuid4().hex[:20]
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -180,7 +184,7 @@ class Migration(migrations.Migration):
             model_name="familia",
             name="codigo",
             field=models.CharField(
-                default=uuid.uuid4,
+                default=short_uuid,
                 max_length=20,
                 primary_key=True,
                 serialize=False,

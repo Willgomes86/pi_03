@@ -1,5 +1,66 @@
-from django.db import models
 from datetime import date
+
+from django.conf import settings
+from django.db import models
+
+
+class Doador(models.Model):
+    nome = models.CharField(max_length=120)
+    documento = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    telefone = models.CharField(max_length=20, blank=True, null=True)
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["nome"]
+
+    def __str__(self):
+        return self.nome
+
+
+class Doacao(models.Model):
+    class Categoria(models.TextChoices):
+        FINANCEIRA = "financeira", "Financeira"
+        ALIMENTOS = "alimentos", "Alimentos"
+        VESTUARIO = "vestuario", "Vestuário"
+        HIGIENE = "higiene", "Higiene"
+        MATERIAL_ESCOLAR = "material_escolar", "Material Escolar"
+        OUTROS = "outros", "Outros"
+
+    doador = models.ForeignKey(
+        Doador,
+        on_delete=models.SET_NULL,
+        related_name="doacoes",
+        null=True,
+        blank=True,
+    )
+    categoria = models.CharField(
+        max_length=30,
+        choices=Categoria.choices,
+        default=Categoria.FINANCEIRA,
+    )
+    descricao = models.CharField(max_length=255)
+    valor = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    quantidade = models.PositiveIntegerField(default=1)
+    unidade = models.CharField(max_length=30, blank=True, default="")
+    data_doacao = models.DateField(default=date.today)
+    observacoes = models.TextField(blank=True, default="")
+    registrada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="doacoes_registradas",
+        null=True,
+        blank=True,
+    )
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-data_doacao", "-id"]
+
+    def __str__(self):
+        return f"{self.get_categoria_display()} - {self.descricao}"
 
 
 class Familia(models.Model):
@@ -73,3 +134,58 @@ class Filho(models.Model):
 
     def __str__(self):
         return f"{self.nome} ({self.familia.lider_familia})"
+
+
+class Repasse(models.Model):
+    class Status(models.TextChoices):
+        PLANEJADO = "planejado", "Planejado"
+        ENTREGUE = "entregue", "Entregue"
+        CANCELADO = "cancelado", "Cancelado"
+
+    familia = models.ForeignKey(
+        Familia,
+        on_delete=models.PROTECT,
+        related_name="repasses",
+    )
+    doacao = models.ForeignKey(
+        Doacao,
+        on_delete=models.SET_NULL,
+        related_name="repasses",
+        null=True,
+        blank=True,
+    )
+    categoria = models.CharField(
+        max_length=30,
+        choices=Doacao.Categoria.choices,
+        default=Doacao.Categoria.FINANCEIRA,
+    )
+    descricao = models.CharField(max_length=255)
+    valor_estimado = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    quantidade = models.PositiveIntegerField(default=1)
+    unidade = models.CharField(max_length=30, blank=True, default="")
+    data_repasse = models.DateField(default=date.today)
+    observacoes = models.TextField(blank=True, default="")
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.ENTREGUE,
+    )
+    responsavel = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="repasses_registrados",
+        null=True,
+        blank=True,
+    )
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-data_repasse", "-id"]
+
+    def __str__(self):
+        return f"Repasse #{self.id} - {self.familia.lider_familia}"
