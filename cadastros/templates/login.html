@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Colo de Mãe{% endblock %}
+
+{% block content %}
+{% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+<style>
+body{
+  background-image: linear-gradient(to left,rgb(255, 255, 255),steelblue);
+  background-size: 100% 100%;
+  background-position: center center;
+  background-repeat: no-repeat;
+  margin: 0;
+  height: 100vh;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+
+.card-login{
+  background-color: rgba(0, 0, 0, 0.801);
+  position: absolute;
+  text-align: center;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 50px;
+  padding-left: 110px ;
+  padding-right: 110px ;
+  border-radius: 15px;
+  color: whitesmoke;
+  box-shadow: 15px 15px 20px steelblue, -15px -15px 20px white;
+}
+
+input{
+  padding: 15px;
+  padding-left:35px;
+  padding-right:35px;
+  border-radius: 15px;
+}
+
+button{
+  font-size: 20px;
+  border-radius: 15px;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  padding: 15px;
+  padding-left:35px;
+  padding-right:35px;
+  cursor: pointer;
+  font-style: italic;
+  border-color: whitesmoke;
+  background-color: rgba(0, 0, 0, 0.151);
+  color: whitesmoke;
+}
+
+button:hover{
+  background-color: whitesmoke;
+  color: black;
+  transition-duration: 0.5s;
+}
+
+h1{
+  font-size: 45px;
+}
+
+p{
+  position: absolute;
+  text-align: center;
+  font-size: 20px;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  bottom: 3%;
+  right: 33%;
+}
+{%  load static %}
+</style>
+    <footer>
+  <p style="text-align: center;">
+    <i>Desenvolvido por </i>
+    <span style="
+      background: linear-gradient(to right, blue, green);
+      -webkit-background-clip: text;
+      -moz-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      ">
+      <code>CodeCraft & Data Analytics</code>
+    </span>
+    <a href="https://www.instagram.com/ccda_union/?utm_source=ig_web_button_share_sheet">
+      <img src="{% static 'admin/img/insta.png' %}" alt="logo instagram" width="20px">
+    </a>
+  </p>
+</footer>
+
+<div class="card-login">
+    <h1>Login</h1>
+    <form method=post action={% url 'login' %}>
+      {% csrf_token %}
+      <input type="text" id="InputUsername" name="username" placeholder="Nome:">
+      <br><br>
+      <input type="password" id="InputPassword" name="password" placeholder="Senha:">
+      <br><br>
+      <button type="submit">Entrar</button>
+      </button>
+    </form>
+</div>
+
+{% endblock %}

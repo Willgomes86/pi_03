@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}Anamnese Familiar - Colo de Mãe{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if messages %}
+      <div class="messages">
+          {% for message in messages %}
+              <div class="alert alert-{{ message.tags }}">
+                  {{ message }}
+              </div>
+          {% endfor %}
+      </div>
+  {% endif %}
+  <form class="p-4 p-md-5 border rounded-3 bg-light" action="{% url 'cadastrar_familia' %}" method="POST">
+    {% csrf_token %}
+    <h3 class="text-center">Anamnese Familiar - Colo de Mãe</h3>
+    <hr>
+
+    <div class="row g-3">
+      <!-- Código -->
+      <div class="col-md-1">
+          <div class="form-floating">
+<!--              <input type="text" class="form-control" id="codigo" name="codigo" placeholder="Código" value="{{ proximo_codigo }}" readonly>-->
+              <input type="text" class="form-control" id="codigo" name="codigo" placeholder="Código" value="">
+              <label for="codigo">Código</label>
+          </div>
+      </div>
+
+      <!-- Líder da Família -->
+      <div class="col-md-12">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="liderFamilia" name="lider_familia" placeholder="Líder da Família">
+          <label for="liderFamilia">Líder da Família</label>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="date" class="form-control" name="data_nasc_lider" id="data_nasc_lider" value="{{ data_nasc_lider|default_if_none:'' }}">
+          <label for="data_nasc_lider">Data de Nascimento</label>
+        </div>
+      </div>
+
+
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="cidadeEstadoNascLider" name="cidade_estado_nasc_lider" placeholder="Cidade/Estado Nasc.">
+          <label for="cidadeEstadoNascLider">Cidade/Estado de Nascimento</label>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="profissaoLider" name="profissao_lider" placeholder="Profissão">
+          <label for="profissaoLider">Profissão</label>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="escolaridadeLider" name="escolaridade_lider" placeholder="Escolaridade">
+          <label for="escolaridadeLider">Escolaridade</label>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="cpfLider" name="cpf_lider" placeholder="CPF">
+          <label for="cpfLider">CPF</label>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="rgLider" name="rg_lider" placeholder="RG">
+          <label for="rgLider">RG</label>
+        </div>
+      </div>
+
+            <!-- Estado Civil -->
+      <div class="col-md-12">
+        <label for="estadoCivil">Estado Civil</label>
+        <select class="form-select" id="estado_civil" name="estado_civil">
+          <option value="" disabled selected hidden>Clique para Selecionar</option>
+          <option value="solteiro">Solteiro</option>
+          <option value="casado">Casado</option>
+          <option value="religioso">Religioso</option>
+          <option value="viuvo">Viúvo</option>
+          <option value="uniaoEstavel">União Estável</option>
+        </select>
+      </div>
+
+      <!-- Cônjuge -->
+      <div class="col-md-12">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="conjuge" name="conjuge" placeholder="Cônjuge">
+          <label for="conjuge">Cônjuge</label>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="date" class="form-control" name="data_nasc_conj" id="data_nasc_conj" value="{{ data_nasc_conj|default_if_none:'' }}">
+          <label for="data_nasc_conj">Data de Nascimento</label>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="cidadeEstadoNascConjuge" name="cidade_estado_nasc_conj" placeholder="Cidade/Estado Nasc.">
+          <label for="cidadeEstadoNascConjuge">Cidade/Estado de Nascimento</label>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="profissaoConjuge" name="profissao_conj" placeholder="Profissão">
+          <label for="profissaoConjuge">Profissão</label>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="escolaridadeConjuge" name="escolaridade_conj" placeholder="Escolaridade">
+          <label for="escolaridadeConjuge">Escolaridade</label>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="cpfConjuge" name="cpf_conj" placeholder="CPF">
+          <label for="cpfConjuge">CPF</label>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="rgConjuge" name="rg_conj" placeholder="RG">
+          <label for="rgConjuge">RG</label>
+        </div>
+      </div>
+
+      <!-- Informações Adicionais -->
+      <div class="col-md-12">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="religiao" name="religiao" placeholder="Religião">
+          <label for="religiao">Religião</label>
+        </div>
+      </div>
+
+      <div class="col-md-12">
+        <label>Recebe Bolsa Família?</label>
+        <label for="bolsaFamilia"></label><select class="form-select" id="bolsaFamilia" name="bolsa_familia">
+          <option disabled selected hidden>Clique para Selecionar</option>
+          <option value="nao">Não</option>
+          <option value="sim">Sim</option>
+        </select>
+      </div>
+
+      <div class="col-md-12">
+        <label>Recebe algum outro benefício?</label>
+        <label for="outroBeneficio"></label><select class="form-select" id="outroBeneficio" name="outro_beneficio">
+          <option disabled selected hidden>Clique para Selecionar</option>
+          <option value="nao">Não</option>
+          <option value="sim">Sim</option>
+        </select>
+      </div>
+
+      <div class="col-md-12">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="rendaFamiliar" name="renda_familiar" placeholder="Renda Média Familiar">
+          <label for="rendaFamiliar">Renda Média Familiar (R$)</label>
+        </div>
+      </div>
+
+      <div class="col-md-12">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="tempoBairro" name="tempo_bairro" placeholder="Há quanto tempo mora no bairro">
+          <label for="tempoBairro">Há quanto tempo mora no bairro</label>
+        </div>
+      </div>
+
+      <div class="col-md-12">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="tempoCidade" name="tempo_cidade" placeholder="Há quanto tempo mora na cidade">
+          <label for="tempoCidade">Há quanto tempo mora na cidade</label>
+        </div>
+      </div>
+
+      <!-- Residência -->
+      <div class="col-md-12">
+        <label>Residência</label>
+        <label for="residencia"></label><select class="form-select" id="residencia" name="residencia">
+          <option disabled selected hidden>Clique para Selecionar</option>
+          <option value="propriaQuitada">Própria Quitada</option>
+          <option value="propriaFinanciada">Própria Financiada</option>
+          <option value="alugada">Alugada</option>
+          <option value="cedida">Cedida</option>
+          <option value="outros">Outros</option>
+        </select>
+      </div>
+
+      <!-- Dependentes -->
+      <div class="col-md-12">
+        <div class="form-floating">
+          <input type="number" class="form-control" id="qtDependentes" name="qt_dependentes" placeholder="Quantidade de Dependentes">
+          <label for="qtDependentes">Quantidade de Dependentes</label>
+        </div>
+      </div>
+
+      <!-- Filhos -->
+      <div class="col-md-12">
+        <h4>Filhos</h4>
+        <div id="filhos">
+            <div class="col-md-1">
+                <label>Tem filho?</label>
+              <label for="TemFilhos"></label><select class="form-select" id="TemFilhos" name="tem_filhos">
+                    <option disabled selected hidden>Clique para Selecionar</option>
+                    <option value="nao">Não</option>
+                    <option value="sim">Sim</option>
+                </select>
+            </div>
+        </div>
+        <div id="quantidade-filhos" class="d-none mt-3 col-md-2">
+            <div class="form-floating">
+                <input type="number" class="form-control" id="qtFilhos" name="qt_filhos" placeholder="Quantidade de Filhos" min="0" max="15">
+                <label for="qtFilhos">Quantidade de filhos</label>
+            </div>
+        </div>
+
+        <div id="dados-filhos" class="mt-3"></div>
+      </div>
+
+      <!-- Vacinação e Doenças -->
+      <div class="col-md-12">
+        <label>Carteira de vacinação em dia?</label>
+        <label for="vacinaEmDia"></label><select class="form-select" id="vacinaEmDia" name="vacina_em_dia">
+          <option disabled selected hidden>Clique para Selecionar</option>
+          <option value="sim">Sim</option>
+          <option value="nao">Não</option>
+        </select>
+      </div>
+
+      <div class="col-md-12">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="doencaCronica" name="doenca_cronica" placeholder="Doença Crônica? Qual?">
+          <label for="doencaCronica">Doença Crônica? Qual?</label>
+        </div>
+      </div>
+
+      <!-- Outros Moradores -->
+      <div class="col-md-12">
+        <div class="form-floating">
+          <input type="number" class="form-control" id="qtOutrosMoradores" name="qt_moradores" placeholder="Quantidade de Outros Moradores">
+          <label for="qtOutrosMoradores">Quantidade de Outros Moradores</label>
+        </div>
+      </div>
+
+      <!-- Contato -->
+      <div class="col-md-12">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="contato" name="contato" placeholder="Contato">
+          <label for="contato">Contato</label>
+        </div>
+      </div>
+
+      <div class="col-md-12">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="endereco" name="endereco" placeholder="Endereço">
+          <label for="endereco">Endereço</label>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="telFixo" name="tel_fixo" placeholder="Tel. Fixo">
+          <label for="telFixo">Tel. Fixo</label>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="celular" name="celular" placeholder="Celular / Operadora">
+          <label for="celular">Celular / Operadora</label>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="email" class="form-control" id="email" name="email" placeholder="E-mail">
+          <label for="email">E-mail</label>
+        </div>
+      </div>
+
+      <!-- Colocar um campo de Observações -->
+      <div class="col-md-5 w-100 rows-2">
+        <div class="form-floating">
+          <textarea class="form-control" id="Observacoes" name="obs" placeholder="Observações" style="height: 100px;"></textarea>
+          <label for="Observacoes">Observações</label>
+        </div>
+      </div>
+
+
+
+
+      <!-- Data da Visita e Responsável -->
+      <div class="col-md-6">
+        <div class="form-floating">
+          <input type="date" class="form-control" name="data_visita" id="data_visita" value="{{ data_visita|default_if_none:'' }}">
+          <label for="data_visita">Data da Visita</label>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="responsavel_visita" name="responsavel_visita" placeholder="Responsável pela Visita">
+          <label for="responsavel_visita">Responsável pela Visita</label>
+        </div>
+      </div>
+
+      <!-- Botão de Enviar -->
+      <hr class="my-4">
+      <div class="col-md-12 text-center">
+          <button type="submit" class="btn btn-primary w-50">Enviar</button>
+      </div>
+    </div>
+  </form>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const temFilhosSelect = document.getElementById('TemFilhos');
+    const quantidadeFilhosDiv = document.getElementById('quantidade-filhos');
+    const qtFilhosInput = document.getElementById('qtFilhos');
+    const dadosFilhosDiv = document.getElementById('dados-filhos');
+
+    temFilhosSelect.addEventListener('change', function() {
+        if (temFilhosSelect.value === 'sim') {
+            quantidadeFilhosDiv.classList.remove('d-none');
+        } else {
+            quantidadeFilhosDiv.classList.add('d-none');
+            dadosFilhosDiv.innerHTML = '';
+        }
+    });
+
+    qtFilhosInput.addEventListener('input', function() {
+        const quantidade = parseInt(qtFilhosInput.value, 10);
+        dadosFilhosDiv.innerHTML = '';
+
+        for (let i = 0; i < quantidade; i++) {
+            dadosFilhosDiv.innerHTML += `
+                <div class="mt-3">
+                    <h5>Filho ${i + 1}</h5>
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="nome${i}" name="nome${i}" placeholder="Nome" required>
+                        <label for="nome${i}">Nome</label>
+                    </div>
+                    <div class="form-floating mt-2">
+                        <input type="date" class="form-control" id="dataNascimento${i}" name="data_nascimento${i}" placeholder="Data de Nascimento" required>
+                        <label for="dataNascimento${i}">Data de Nascimento</label>
+                    </div>
+                    <div class="form-floating mt-2">
+                        <input type="text" class="form-control" id="escola${i}" name="escola${i}" placeholder="Escola" required>
+                        <label for="escola${i}">Escola</label>
+                    </div>
+                    <div class="form-floating mt-2">
+                        <input type="text" class="form-control" id="serie${i}" name="serie${i}" placeholder="Série" required>
+                        <label for="serie${i}">Série</label>
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    qtFilhosInput.addEventListener('input', function() {
+        if (parseInt(qtFilhosInput.value, 10) < 0) {
+            qtFilhosInput.value = 0;
+        }
+    });
+});
+</script>
+
+
+    <br>
+    <br>
+{% endblock %}

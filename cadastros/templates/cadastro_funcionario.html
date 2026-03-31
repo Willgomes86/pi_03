@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastro - Colo de Mãe{% endblock %}
+
+{% block content %}
+<style>
+    .button-container {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+    }
+    .messages {
+        margin-bottom: 20px;
+    }
+
+    body{
+      background-image: linear-gradient(to right,rgb(255, 255, 255),steelblue);
+      font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    }
+
+   div{
+      /*position: static;*/
+      /*background-color: rgba(0, 0, 0, 0.808);*/
+      /*font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;*/
+      border-radius: 15px;
+      /*padding-left: 60px;*/
+      /*padding-top: 20px;*/
+      padding-bottom: 20px;
+      /*margin: 60px;*/
+      /*margin-right: 80px;*/
+    }
+
+    label{
+      color: black;
+      font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+      font-size: 18px;
+    }
+
+    input{
+      font-size: 20px;
+      border-radius: 15px;
+
+    }
+
+    button{
+      font-size: 30px;
+      background-color: rgba(0, 0, 0, 0.500);
+      border-radius: 15px;
+      border-color: whitesmoke;
+      color: whitesmoke;
+      text-align: center;
+      padding: 10px;
+      padding-left:40px;
+      padding-right:40px;
+    }
+
+    button :hover{
+      background-color: whitesmoke;
+      color: black;
+      transition-duration: 0.5s;
+    }
+
+</style>
+{% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+<div class="container">
+  <div class="row align-items-center">
+    <div class="col-md-10 mx-auto col-lg-5">
+        <!-- Bloco para exibir mensagens de sucesso e erro -->
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form class="p-4 p-md-5 border rounded-3 bg-light" method="post" action="{% url 'cadastro_funcionario' %}">
+            {% csrf_token %}
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="InputFirstName" name="firstname" placeholder="firstname">
+                <label for="InputFirstName">Primeiro Nome</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="InputLastName" name="lastname" placeholder="lastname">
+                <label for="InputLastName">Sobrenome</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="InputUsername" name="username" placeholder="username">
+                <label for="InputUsername">Usuário</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="email" class="form-control" id="InputEmail" name="email" placeholder="email">
+                <label for="InputEmail">E-mail</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control" id="InputPassword" name="password" placeholder="password">
+                <label for="InputPassword">Senha</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control" id="InputConfirmPassword" name="confirm_password" placeholder="password">
+                <label for="InputConfirmPassword">Confirme a Senha</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="is_admin" id="flexCheckAdmin">
+                <label class="form-check-label" for="flexCheckAdmin">
+                    Administrador
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="is_staff" id="flexCheckStaff" checked>
+                <label class="form-check-label" for="flexCheckStaff">
+                    Staff
+                </label>
+            </div>
+
+            <div class="button-container">
+                <button class="btn btn-lg btn-success" type="submit">Cadastrar</button>
+                <button class="btn btn-lg btn-danger" type="button" onclick="window.location.href='{% url 'home' %}'">Cancelar</button>
+            </div>
+        </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

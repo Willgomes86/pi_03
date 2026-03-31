@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Colo de Mãe{% endblock %}
+
+{% block content %}
+
+<style>
+    {% load static %}
+    body {
+        position: relative;
+        margin: 0;
+        height: 100vh;
+        overflow: auto; /* Garante que o conteúdo possa rolar se necessário */
+        background-color: #fff; /* Cor de fundo padrão para garantir que o conteúdo tenha um fundo claro */
+    }
+
+    body::before {
+        content: ""; /* Necessário para o pseudo-elemento aparecer */
+        position: fixed; /* Garante que o pseudo-elemento cubra toda a tela */
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("{% static 'admin/img/ns_fatima1.png' %}");
+        background-size: cover;
+        background-position: center 0px; /* Move a imagem para baixo em 3 cm */
+        background-repeat: no-repeat;
+        opacity: 0.2; /* Ajusta a transparência da imagem (0.0 a 1.0) */
+        z-index: -1; /* Garante que a imagem fique atrás do conteúdo */
+    }
+
+      main {
+        position: relative;
+        z-index: 1; /* Garante que o conteúdo fique acima da imagem de fundo */
+        padding: 20px; /* Adiciona espaço ao redor do conteúdo */
+      }
+
+      h4 {
+        font-size: 35px;
+        text-align: center;
+      }
+
+      aside {
+        background-color: rgba(0, 0, 0, 0.5);
+        font-size: 18px;
+        color: #000000;
+        font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0;
+        padding: 2%;
+        border-radius: 35px;
+        max-width: 1100px; /* Define uma largura máxima para o aside */
+        margin-left: auto; /* Centraliza horizontalmente */
+        margin-right: auto; /* Centraliza horizontalmente */
+      }
+
+      p {
+        font-size: 18px;
+        line-height: 1.6; /* Melhora a legibilidade do texto */
+      }
+
+      span {
+        font-weight: bold;
+      }
+
+</style>
+
+<main>
+    <article>
+        <h4>Colo de Mãe Pastoral Social e Comunidade Católica em Guaxupé</h4>
+    </article>
+    <br>
+    <aside>
+        <p>Em agosto de 2016, eu e meu esposo Reginaldo já estando engajados na igreja
+        começamos a nos sentir incomodados, parecia que algo estava faltando. Após oração e
+        adoração, tive um sonho em que Maria Santíssima me pegava no colo e me
+        ensinava o projeto que seu Filho nos entregava como missão. Após oração,
+        adoração e escuta consegui discernir e inspirada pelo Espirito Santo redigi um
+        projeto que foi apresentado ao Padre Reginaldo Silva, na época cura da catedral,
+        nossa paróquia e por ele foi nomeado como Pastoral Social, nasce a Colo de Mãe.
+        <br><br>
+        Cujo o lema é: “Amar é Servir a Deus”, as atividades pastorais tiveram inicio em 15
+        de novembro de 2016, com o carisma Pão e Palavra (Galatas 2,10/Provérbios
+        14,31). Um pequeno grupo de amigos saia as ruas para levar alimento, amor e
+        experiencia da misericórdia de Deus aos moradores de rua. Aos poucos, as obras
+        de caridade se expandiram com atendimento a famílias carentes, crianças, jovens
+        e dependentes químicos.
+        <br><br>
+        A Colo de Mãe realiza atividades semanais com momentos de espiritualidade
+        para todos que o procuram: Oração do terço Mariano, terço da Misericórdia,
+        intercessão, acolhimento, escuta e direcionamento. Conta, ainda, com projetos
+        internos: aulas de violão e canto. Além dos projetos de evangelização: Na Estrada
+        com São José, Mulheres que Rezam Com Maria, Juntos pela Vida e Grupo kid’s
+        Colorindo o Mundo com as cores da salvação. Projetos estes direcionados para
+        homens, mulheres, gestantes, crianças e jovens da comunidade em geral.
+        <br><br>
+        Promove, todos os meses, um encontro catequético com dinâmica de
+        socialização e conscientização para crianças assistidas e seus familiares, com
+        visita a capela do santíssimo, momento de oração e adoração, brincadeiras e
+        humanização. Nesse dia, são entregues cestas básicas, leite, roupas, mobílias,
+        além de um delicioso café da manhã, almoço ou lanche, sobremesa e bolo para
+        os aniversariantes do mês, às mais de 200 pessoas acompanhadas.
+        <br><br>
+        Em 2018, foi inaugurada uma biblioteca católica com livros, CDs, DVDs e
+        documentos da Igreja que contribuem para a evangelização e o esclarecimento
+        dos fieis, gratuitamente.
+        <br><br>
+        Ninguém vai até a Colo de Mãe se não estiver precisando de algo e nós com o
+        Amor em servir estamos de braços abertos para acolher.
+        <br><br>
+        Fundadores: Sirlene de Fatima Rezende Lima e Reginaldo de Lima
+        </p>
+    </aside>
+</main>
+
+{% endblock %}

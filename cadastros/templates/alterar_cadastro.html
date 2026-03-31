@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}Alterar Cadastro{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if mensagem %}
+        <div class="messages">
+            <div class="alert alert-info">
+                {{ mensagem }}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Formulário de Busca -->
+    <form class="border rounded-3 bg-light" method="post" action="{% url 'alterar_cadastro' %}">
+        {% csrf_token %}
+        <h3 class="text-center">Buscar Cadastro</h3>
+        <hr>
+
+        <div class="row">
+            <div class="col-md-1">
+                <label for="codigo" class="form-label">Código</label>
+                <input type="text" class="form-control" id="codigo" name="codigo" placeholder="Código" required>
+            </div>
+
+            <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Formulário de Alteração -->
+    {% if cadastros %}
+        {% for cadastro in cadastros %}
+   <form class="p-4 p-md-5 border rounded-3 bg-light" action="{% url 'alterar_cadastro' %}" method="POST">
+        {% csrf_token %}
+        <h3 class="text-center">Alterar Cadastro</h3>
+        <hr>
+
+        <div class="row g-3">
+          <!-- Código -->
+          <div class="col-md-1">
+              <div class="form-floating">
+                  <input type="text" class="form-control" id="codigo" name="codigo" placeholder="Código" value="{{ cadastro.codigo }}" >
+                  <label for="codigo">Código</label>
+              </div>
+          </div>
+
+          <!-- Líder da Família -->
+          <div class="col-md-12">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="liderFamilia" name="lider_familia" placeholder="Líder da Família" value="{{ cadastro.lider_familia }}">
+              <label for="liderFamilia">Líder da Família</label>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-floating">
+              <input type="date" class="form-control" name="data_nasc_lider" id="data_nasc_lider" value="{% if cadastro.dt_nasc_lider %}{{ cadastro.dt_nasc_lider|date:'Y-m-d' }}{% endif %}">
+              <label for="data_nasc_lider">Data de Nascimento</label>
+            </div>
+          </div>
+
+
+          <div class="col-md-4">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="cidadeEstadoNascLider" name="cidade_estado_nasc_lider" placeholder="Cidade/Estado Nasc." value="{{ cadastro.cidade_estado_nasc_lider }}">
+              <label for="cidadeEstadoNascLider">Cidade/Estado de Nascimento</label>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="profissaoLider" name="profissao_lider" placeholder="Profissão" value="{{  cadastro.profissao_lider }}">
+              <label for="profissaoLider">Profissão</label>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="escolaridadeLider" name="escolaridade_lider" placeholder="Escolaridade" value="{{ cadastro.escolaridade_lider }}">
+              <label for="escolaridadeLider">Escolaridade</label>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="cpfLider" name="cpf_lider" placeholder="CPF" value="{{ cadastro.cpf_lider }}">
+              <label for="cpfLider">CPF</label>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="rgLider" name="rg_lider" placeholder="RG" value="{{ cadastro.rg_lider }}">
+              <label for="rgLider">RG</label>
+            </div>
+          </div>
+
+                <!-- Estado Civil -->
+          <div class="col-md-12">
+             <label for="estadoCivil">Estado Civil</label>
+              <label for="estado_civil"></label><select class="form-select" id="estado_civil" name="estado_civil">
+               <option value="" disabled hidden>Clique para Selecionar</option>
+               <option value="solteiro" {% if cadastro.estado_civil == 'solteiro' %}selected{% endif %}>Solteiro</option>
+               <option value="casado" {% if cadastro.estado_civil == 'casado' %}selected{% endif %}>Casado</option>
+               <option value="religioso" {% if cadastro.estado_civil == 'religioso' %}selected{% endif %}>Religioso</option>
+               <option value="viuvo" {% if cadastro.estado_civil == 'viuvo' %}selected{% endif %}>Viúvo</option>
+               <option value="uniaoEstavel" {% if cadastro.estado_civil == 'uniaoEstavel' %}selected{% endif %}>União Estável</option>
+             </select>
+          </div>
+
+          <!-- Cônjuge -->
+          <div class="col-md-12">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="conjuge" name="conjuge" placeholder="Cônjuge" value="{{ cadastro.conjuge }}">
+              <label for="conjuge">Cônjuge</label>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-floating">
+              <input type="date" class="form-control" name="data_nasc_conj" id="data_nasc_conj" value="{% if cadastro.dt_nasc_conjuge %}{{ cadastro.dt_nasc_conjuge|date:'Y-m-d' }}{% else %}{{ '' }}{% endif %}">
+              <label for="data_nasc_conj">Data de Nascimento</label>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="cidadeEstadoNascConjuge" name="cidade_estado_nasc_conj" placeholder="Cidade/Estado Nasc." value="{{ cadastro.cidade_estado_nasc_conjuge }}">
+              <label for="cidadeEstadoNascConjuge">Cidade/Estado de Nascimento</label>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="profissaoConjuge" name="profissao_conj" placeholder="Profissão" value="{{ cadastro.profissao_conjuge }}">
+              <label for="profissaoConjuge">Profissão</label>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="escolaridadeConjuge" name="escolaridade_conj" placeholder="Escolaridade" value="{{ cadastro.escolaridade_conjuge }}">
+              <label for="escolaridadeConjuge">Escolaridade</label>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="cpfConjuge" name="cpf_conj" placeholder="CPF" value="{{ cadastro.cpf_conjuge }}">
+              <label for="cpfConjuge">CPF</label>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="rgConjuge" name="rg_conj" placeholder="RG" value="{{ cadastro.rg_conjuge }}">
+              <label for="rgConjuge">RG</label>
+            </div>
+          </div>
+
+          <!-- Informações Adicionais -->
+          <div class="col-md-12">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="religiao" name="religiao" placeholder="Religião" value="{{ cadastro.religiao }}">
+              <label for="religiao">Religião</label>
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <label>Recebe Bolsa Família?</label>
+            <label for="bolsaFamilia"></label>
+            <select class="form-select" id="bolsaFamilia" name="bolsa_familia">
+              <option disabled hidden>Clique para Selecionar</option>
+              <option value="nao" {% if cadastro.bolsa_familia == 'nao' %}selected{% endif %}>Não</option>
+              <option value="sim" {% if cadastro.bolsa_familia == 'sim' %}selected{% endif %}>Sim</option>
+            </select>
+          </div>
+
+          <div class="col-md-12">
+            <label>Recebe algum outro benefício?</label>
+            <label for="outroBeneficio"></label><select class="form-select" id="outroBeneficio" name="outro_beneficio">
+              <option disabled hidden>Clique para Selecionar</option>
+              <option value="nao" {% if cadastro.outro_beneficio == 'nao' %}selected{% endif %}>Não</option>
+              <option value="sim" {% if cadastro.outro_beneficio == 'sim' %}selected{% endif %}>Sim</option>
+            </select>
+          </div>
+
+          <div class="col-md-12">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="rendaFamiliar" name="renda_familiar" placeholder="Renda Média Familiar" value="{{ cadastro.renda_familiar }}">
+              <label for="rendaFamiliar">Renda Média Familiar (R$)</label>
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="tempoBairro" name="tempo_bairro" placeholder="Há quanto tempo mora no bairro" value="{{ cadastro.tempo_bairro }}">
+              <label for="tempoBairro">Há quanto tempo mora no bairro</label>
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="tempoCidade" name="tempo_cidade" placeholder="Há quanto tempo mora na cidade" value="{{ cadastro.tempo_cidade }}">
+              <label for="tempoCidade">Há quanto tempo mora na cidade</label>
+            </div>
+          </div>
+
+          <!-- Residência -->
+          <div class="col-md-12">
+             <label for="residencia">Residência</label>
+             <select class="form-select" id="residencia" name="residencia">
+               <option disabled hidden>Clique para Selecionar</option>
+               <option value="propriaQuitada" {% if cadastro.residencia == 'propriaQuitada' %}selected{% endif %}>Própria Quitada</option>
+               <option value="propriaFinanciada" {% if cadastro.residencia == 'propriaFinanciada' %}selected{% endif %}>Própria Financiada</option>
+               <option value="alugada" {% if cadastro.residencia == 'alugada' %}selected{% endif %}>Alugada</option>
+               <option value="cedida" {% if cadastro.residencia == 'cedida' %}selected{% endif %}>Cedida</option>
+               <option value="outros" {% if cadastro.residencia == 'outros' %}selected{% endif %}>Outros</option>
+             </select>
+          </div>
+
+          <!-- Dependentes -->
+          <div class="col-md-12">
+            <div class="form-floating">
+              <input type="number" class="form-control" id="qtDependentes" name="qt_dependentes" placeholder="Quantidade de Dependentes" value="{{ cadastro.qt_dependentes }}">
+              <label for="qtDependentes">Quantidade de Dependentes</label>
+            </div>
+          </div>
+
+          <!-- Filhos -->
+          <div class="col-md-12">
+            <h4>Filhos</h4>
+                <div id="filhos">
+                    <div class="col-md-1">
+                        <label>Tem filho?</label>
+                        <label for="TemFilhos"></label>
+                        <select class="form-select" id="TemFilhos" name="tem_filhos">
+                            <option disabled hidden>Clique para Selecionar</option>
+                            <option value="True" {% if cadastro.tem_filhos %}selected{% endif %}>Sim</option>
+                            <option value="False" {% if not cadastro.tem_filhos %}selected{% endif %}>Não</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-12">
+                    <div id="quantidade-filhos" class="{% if not cadastro.tem_filhos %}d-none{% endif %}">
+                        <label for="qtFilhos">Quantidade de Filhos</label>
+                        <input type="number" id="qtFilhos" name="qt_filhos" value="{{ cadastro.qt_filhos }}" class="form-control">
+                    </div>
+
+                    <div id="dados-filhos">
+                        {% for filho in cadastro.filhos.all %}
+                            <div class="mt-3">
+                                <h5>Filho {{ forloop.counter }}</h5>
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="nome{{ forloop.counter0 }}" name="nome{{ forloop.counter0 }}" placeholder="Nome" value="{{ filho.nome }}">
+                                    <label for="nome{{ forloop.counter0 }}">Nome</label>
+                                </div>
+                                <div class="form-floating mt-2">
+                                    <input type="date" class="form-control" id="dataNascimento{{ forloop.counter0 }}" name="data_nascimento{{ forloop.counter0 }}" placeholder="Data de Nascimento" value="{% if filho.dt_nasc_filho %}{{ filho.dt_nasc_filho|date:'Y-m-d' }}{% endif %}">
+                                    <label for="dataNascimento{{ forloop.counter0 }}">Data de Nascimento</label>
+                                </div>
+                                <div class="form-floating mt-2">
+                                    <input type="text" class="form-control" id="escola{{ forloop.counter0 }}" name="escola{{ forloop.counter0 }}" placeholder="Escola" value="{{ filho.escola }}">
+                                    <label for="escola{{ forloop.counter0 }}">Escola</label>
+                                </div>
+                                <div class="form-floating mt-2">
+                                    <input type="text" class="form-control" id="serie{{ forloop.counter0 }}" name="serie{{ forloop.counter0 }}" placeholder="Série" value="{{ filho.serie }}">
+                                    <label for="serie{{ forloop.counter0 }}">Série</label>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+          </div>
+
+
+          <!-- Vacinação e Doenças -->
+          <div class="col-md-12">
+            <label>Carteira de vacinação em dia?</label>
+            <label for="vacinaEmDia"></label><select class="form-select" id="vacinaEmDia" name="vacina_em_dia">
+              <option disabled hidden>Clique para Selecionar</option>
+              <option value="sim" {% if cadastro.vacina_em_dia == 'sim' %}selected{% endif %}>Sim</option>
+              <option value="nao" {% if cadastro.bolsa_vacina_em_dia == 'nao' %}selected{% endif %}>Não</option>
+            </select>
+          </div>
+
+          <div class="col-md-12">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="doencaCronica" name="doenca_cronica" placeholder="Doença Crônica? Qual?" value="{{ cadastro.doenca_cronica }}">
+              <label for="doencaCronica">Doença Crônica? Qual?</label>
+            </div>
+          </div>
+
+          <!-- Outros Moradores -->
+          <div class="col-md-12">
+            <div class="form-floating">
+              <input type="number" class="form-control" id="qtOutrosMoradores" name="qt_moradores" placeholder="Quantidade de Outros Moradores" value="{{ cadastro.qt_outros_moradores }}">
+              <label for="qtOutrosMoradores">Quantidade de Outros Moradores</label>
+            </div>
+          </div>
+
+          <!-- Contato -->
+          <div class="col-md-12">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="contato" name="contato" placeholder="Contato" value="{{ cadastro.contato }}">
+              <label for="contato">Contato</label>
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="endereco" name="endereco" placeholder="Endereço" value="{{ cadastro.endereco }}">
+              <label for="endereco">Endereço</label>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="telFixo" name="tel_fixo" placeholder="Tel. Fixo" value="{{ cadastro.tel_fixo }}">
+              <label for="telFixo">Tel. Fixo</label>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="celular" name="celular" placeholder="Celular / Operadora" value="{{ cadastro.celular }}">
+              <label for="celular">Celular / Operadora</label>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-floating">
+              <input type="email" class="form-control" id="email" name="email" placeholder="E-mail" value="{{ cadastro.email }}">
+              <label for="email">E-mail</label>
+            </div>
+          </div>
+
+          <!-- Colocar um campo de Observações -->
+          <div class="col-md-5 w-100 rows-2">
+              <div class="form-floating">
+                  <textarea class="form-control" id="Observacoes" name="obs" placeholder="Observações" style="height: 100px;">
+                      {{ cadastro.observacoes }}
+                  </textarea>
+                  <label for="Observacoes">Observações</label>
+              </div>
+          </div>
+
+          <!-- Data da Visita e Responsável -->
+          <div class="col-md-6">
+            <div class="form-floating">
+              <input type="date" class="form-control" name="data_visita" id="data_visita" value="{% if cadastro.data_visita %}{{ cadastro.data_visita|date:'Y-m-d' }}{% else %}{{ '' }}{% endif %}">
+              <label for="data_visita">Data da Visita</label>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="responsavel_visita" name="responsavel_visita" placeholder="Responsável pela Visita" value="{{ cadastro.responsavel_visita }}">
+              <label for="responsavel_visita">Responsável pela Visita</label>
+            </div>
+          </div>
+          <div class="col-md-12 text-center">
+              <button type="submit" class="btn btn-primary w-50">Alterar</button>
+          </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <title>{% block title %}Cadastro Familias - Colo de Mãe{% endblock %}</title>
+    <style>
+      .navbar-custom {
+        background-color: steelblue;
+      }
+      footer {
+        /*position: fixed;*/
+        width: 100%;
+        bottom: 0;
+        background-color: transparent; /* Totalmente transparente */
+        padding: 1px 0;
+        text-align: center;
+      }
+    </style>
+    {% block extra_head %}{% endblock %}
+  </head>
+
+  <body>
+<nav class="navbar navbar-dark navbar-custom">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{% url 'home' %}">Colo de Mãe</a>
+        <div class="d-flex align-items-center ms-auto">
+          {% if not user.is_authenticated %}
+            <a class="text-light small-text me-3" href="{% url 'login' %}">Login</a>
+          {% endif %}
+        </div>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+       {% if user.is_authenticated %}<span class="text-light small-text me-3">Olá, {{ user.first_name }}!</span>{%  endif %}
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="{% url 'home' %}">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'nossa_historia' %}">Nossa História</a>
+        </li>
+
+        {% if user.is_authenticated %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="{% url 'cadastrar_familia' %}" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Cadastrar Familia
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <li><a class="dropdown-item" href="{% url 'cadastrar_familia' %}">Cadastrar</a></li>
+            <li><a class="dropdown-item" href="{% url 'alterar_cadastro' %}">Alterar Cadastro</a></li>
+          </ul>
+        </li>
+        </ul>
+
+        <form class="d-flex" id="search-form" method="get">
+          <input class="form-control me-2" type="search" id="search-input" name="term" placeholder="Procurar Cadastro" aria-label="Procurar Cadastro">
+          <button class="btn btn-dark" type="submit">Procurar</button>
+          <ul id="suggestions-list" class="list-group position-absolute" style="z-index: 1000; display: none;"></ul>
+        </form>
+
+        <form class="d-flex ms-auto mt-3" action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button class="btn btn-danger" type="submit">Sair</button>
+        </form>
+        {% endif %}
+    </div>
+  </div>
+</nav>
+
+
+    <main role="main" class="container mt-4">
+      {% block content %}
+      <!-- Content from child templates will be inserted here -->
+      {% endblock %}
+    </main>
+    {% load static %}
+    <br>
+
+
+<footer>
+  <p>
+    <i>Desenvolvido por </i>
+    <span style="
+      background: linear-gradient(to right, blue, green);
+      -webkit-background-clip: text;
+      -moz-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      ">
+      <code>CodeCraft & Data Analytics</code>
+    </span>
+    <a href="https://www.instagram.com/ccda_union/?utm_source=ig_web_button_share_sheet">
+      <img src="{% static 'admin/img/insta.png' %}" alt="logo instagram" width="20px">
+    </a>
+  </p>
+</footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+          <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          const searchInput = document.getElementById('search-input');
+          const suggestionsList = document.getElementById('suggestions-list');
+          const form = document.getElementById('search-form');
+
+          searchInput.addEventListener('input', function() {
+              const query = searchInput.value;
+
+              if (query.length > 0) {
+                  fetch(`/buscar_cadastro_ajax/?term=${query}`)
+                      .then(response => response.json())
+                      .then(data => {
+                          suggestionsList.innerHTML = '';
+                          if (data.length > 0) {
+                              suggestionsList.style.display = 'block';
+                              data.forEach(item => {
+                                  const listItem = document.createElement('li');
+                                  listItem.className = 'list-group-item';
+                                  listItem.innerHTML = `<a href="/buscar_cadastro/?codigo=${item.codigo}">${item.lider_familia} (Código: ${item.codigo})</a>`;
+                                  suggestionsList.appendChild(listItem);
+                              });
+                          } else {
+                              suggestionsList.style.display = 'none';
+                          }
+                      });
+              } else {
+                  suggestionsList.style.display = 'none';
+              }
+          });
+
+          document.addEventListener('click', function(e) {
+              if (!form.contains(e.target)) {
+                  suggestionsList.style.display = 'none';
+              }
+          });
+
+          form.addEventListener('submit', function(event) {
+              event.preventDefault(); // Evita o envio padrão do formulário
+              const query = searchInput.value;
+
+              if (query.length > 0) {
+                  window.location.href = `/buscar_cadastro/?term=${query}`;
+              }
+          });
+      });
+      </script>
+  </body>
+</html>
