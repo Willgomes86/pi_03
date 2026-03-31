@@ -9,6 +9,7 @@ from .forms import FamiliaForm
 from .models import Familia, Filho
 from django.utils.dateparse import parse_date
 from django.http import JsonResponse
+from django.db.models import Q
 
 
 def superuser_required(user):
@@ -354,10 +355,31 @@ def alterar_cadastro(request):
 
 
 def buscar_cadastro(request):
-    termo = request.GET.get("term", "")
-    cadastros = (
-        Familia.objects.filter(lider_familia__icontains=termo)
-        if termo
-        else Familia.objects.none()
-    )
+    termo = request.GET.get("term", "").strip()
+    codigo = request.GET.get("codigo", "").strip()
+
+    if codigo.isdigit():
+        cadastros = Familia.objects.filter(codigo=int(codigo))
+    elif termo:
+        cadastros = Familia.objects.filter(lider_familia__icontains=termo)
+    else:
+        cadastros = Familia.objects.none()
+
     return render(request, "buscar_cadastro.html", {"cadastros": cadastros})
+
+
+@login_required
+def buscar_cadastro_ajax(request):
+    termo = request.GET.get("term", "").strip()
+    if not termo:
+        return JsonResponse([], safe=False)
+
+    filtros = Q(lider_familia__icontains=termo)
+    if termo.isdigit():
+        filtros |= Q(codigo=int(termo))
+
+    resultados = (
+        Familia.objects.filter(filtros).order_by("lider_familia").values("codigo", "lider_familia")[:10]
+    )
+
+    return JsonResponse(list(resultados), safe=False)

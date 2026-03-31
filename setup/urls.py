@@ -13,6 +13,7 @@ urlpatterns = [
     path("cadastrar_familia/", views.cadastrar_familia, name="cadastrar_familia"),
     path("alterar_cadastro/", views.alterar_cadastro, name="alterar_cadastro"),
     path("buscar_cadastro/", views.buscar_cadastro, name="buscar_cadastro"),
+    path("buscar_cadastro_ajax/", views.buscar_cadastro_ajax, name="buscar_cadastro_ajax"),
     path("nossa_historia/", views.nossa_historia, name="nossa_historia"),
     path("logout/", auth_views.LogoutView.as_view(next_page="login"), name="logout"),
 ]

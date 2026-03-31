@@ -99,17 +99,30 @@ WSGI_APPLICATION = "setup.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+#
+# Usa PostgreSQL quando as variáveis de ambiente estão definidas.
+# Em desenvolvimento local, cai para SQLite para evitar erro 500
+# ao acessar páginas que consultam o banco.
+db_name = env_str("DB_NAME", "")
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env_str("DB_NAME", ""),
-        "USER": env_str("DB_USER", ""),
-        "PASSWORD": env_str("DB_PASSWORD", ""),
-        "HOST": env_str("DB_HOST", "localhost"),
-        "PORT": env_str("DB_PORT", "5432"),
+if db_name:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": db_name,
+            "USER": env_str("DB_USER", ""),
+            "PASSWORD": env_str("DB_PASSWORD", ""),
+            "HOST": env_str("DB_HOST", "localhost"),
+            "PORT": env_str("DB_PORT", "5432"),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
