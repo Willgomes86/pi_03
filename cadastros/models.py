@@ -1,7 +1,8 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.conf import settings
-from django.db import models
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
 
 
 class Doador(models.Model):
@@ -29,6 +30,20 @@ class Doacao(models.Model):
         MATERIAL_ESCOLAR = "material_escolar", "Material Escolar"
         OUTROS = "outros", "Outros"
 
+    class Produto(models.TextChoices):
+        NAO_APLICAVEL = "nao_aplicavel", "Não se aplica"
+        CESTA_BASICA = "cesta_basica", "Cesta básica"
+        FEIJAO = "feijao", "Feijão"
+        ARROZ = "arroz", "Arroz"
+        OLEO = "oleo", "Óleo"
+        BRINQUEDOS = "brinquedos", "Brinquedos"
+        FRALDAS = "fraldas", "Fraldas"
+        LEITE = "leite", "Leite"
+        ROUPAS = "roupas", "Roupas"
+        HIGIENE = "higiene", "Itens de higiene"
+        MATERIAL_ESCOLAR = "material_escolar", "Material escolar"
+        OUTROS = "outros", "Outros"
+
     doador = models.ForeignKey(
         Doador,
         on_delete=models.SET_NULL,
@@ -41,11 +56,17 @@ class Doacao(models.Model):
         choices=Categoria.choices,
         default=Categoria.FINANCEIRA,
     )
+    produto = models.CharField(
+        max_length=30,
+        choices=Produto.choices,
+        default=Produto.NAO_APLICAVEL,
+    )
     descricao = models.CharField(max_length=255)
     valor = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     quantidade = models.PositiveIntegerField(default=1)
     unidade = models.CharField(max_length=30, blank=True, default="")
     data_doacao = models.DateField(default=date.today)
+    data_validade = models.DateField(null=True, blank=True)
     observacoes = models.TextField(blank=True, default="")
     registrada_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -61,6 +82,20 @@ class Doacao(models.Model):
 
     def __str__(self):
         return f"{self.get_categoria_display()} - {self.descricao}"
+
+    @classmethod
+    def produtos_pereciveis(cls):
+        return {
+            cls.Produto.CESTA_BASICA,
+            cls.Produto.FEIJAO,
+            cls.Produto.ARROZ,
+            cls.Produto.OLEO,
+            cls.Produto.LEITE,
+        }
+
+    @classmethod
+    def is_produto_perecivel(cls, produto):
+        return produto in cls.produtos_pereciveis()
 
 
 class Familia(models.Model):
@@ -159,6 +194,11 @@ class Repasse(models.Model):
         choices=Doacao.Categoria.choices,
         default=Doacao.Categoria.FINANCEIRA,
     )
+    produto = models.CharField(
+        max_length=30,
+        choices=Doacao.Produto.choices,
+        default=Doacao.Produto.NAO_APLICAVEL,
+    )
     descricao = models.CharField(max_length=255)
     valor_estimado = models.DecimalField(
         max_digits=10,
@@ -189,3 +229,237 @@ class Repasse(models.Model):
 
     def __str__(self):
         return f"Repasse #{self.id} - {self.familia.lider_familia}"
+
+
+class EstoqueItem(models.Model):
+    produto = models.CharField(
+        max_length=30,
+        choices=Doacao.Produto.choices,
+        unique=True,
+    )
+    quantidade = models.PositiveIntegerField(default=0)
+    unidade = models.CharField(max_length=30, blank=True, default="un")
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["produto"]
+
+    def __str__(self):
+        return f"{self.get_produto_display()} ({self.quantidade} {self.unidade})"
+
+    @classmethod
+    def produtos_controlados(cls):
+        return [
+            (codigo, nome)
+            for codigo, nome in Doacao.Produto.choices
+            if codigo != Doacao.Produto.NAO_APLICAVEL
+        ]
+
+    @classmethod
+    def registrar_entrada(cls, produto, quantidade, unidade="un", data_validade=None, doacao=None):
+        if not produto or produto == Doacao.Produto.NAO_APLICAVEL:
+            return None
+        if quantidade <= 0:
+            return None
+        if Doacao.is_produto_perecivel(produto) and not data_validade:
+            nome_produto = dict(Doacao.Produto.choices).get(produto, produto)
+            raise ValidationError(f"Informe a data de validade para o produto perecível {nome_produto}.")
+        if not Doacao.is_produto_perecivel(produto):
+            data_validade = None
+
+        with transaction.atomic():
+            item, _ = cls.objects.select_for_update().get_or_create(
+                produto=produto,
+                defaults={"unidade": unidade or "un", "quantidade": 0},
+            )
+            if unidade and item.unidade and item.unidade != unidade and item.quantidade > 0:
+                nome_produto = dict(Doacao.Produto.choices).get(produto, produto)
+                raise ValidationError(
+                    f"O produto {nome_produto} já está controlado em {item.unidade}. "
+                    f"Use a mesma unidade no lançamento."
+                )
+
+            item.quantidade += quantidade
+            if unidade and not item.unidade:
+                item.unidade = unidade
+            item.save(update_fields=["quantidade", "unidade", "atualizado_em"])
+
+            if Doacao.is_produto_perecivel(produto):
+                lote, _ = EstoqueLote.objects.select_for_update().get_or_create(
+                    produto=produto,
+                    unidade=item.unidade or unidade or "un",
+                    data_validade=data_validade,
+                    defaults={"quantidade": 0, "doacao": doacao},
+                )
+                lote.quantidade += quantidade
+                if doacao and not lote.doacao:
+                    lote.doacao = doacao
+                lote.save(update_fields=["quantidade", "doacao", "atualizado_em"])
+            return item
+
+    @classmethod
+    def registrar_saida(cls, produto, quantidade, unidade="un", permitir_vencido=False):
+        if not produto or produto == Doacao.Produto.NAO_APLICAVEL:
+            return None
+        if quantidade <= 0:
+            return None
+
+        with transaction.atomic():
+            item, _ = cls.objects.select_for_update().get_or_create(
+                produto=produto,
+                defaults={"unidade": unidade or "un", "quantidade": 0},
+            )
+            if unidade and item.unidade and item.unidade != unidade:
+                nome_produto = dict(Doacao.Produto.choices).get(produto, produto)
+                raise ValidationError(
+                    f"O produto {nome_produto} está controlado em {item.unidade}. "
+                    f"Use a mesma unidade no repasse."
+                )
+
+            if item.quantidade < quantidade:
+                nome_produto = dict(Doacao.Produto.choices).get(produto, produto)
+                raise ValidationError(
+                    f"Estoque insuficiente para {nome_produto}. Disponível: {item.quantidade}."
+                )
+
+            if Doacao.is_produto_perecivel(produto):
+                if not permitir_vencido and EstoqueLote.existe_vencido(produto):
+                    raise ValidationError("Você está doando produto vencido.")
+
+                restante = quantidade
+                lotes = (
+                    EstoqueLote.objects.select_for_update()
+                    .filter(produto=produto, quantidade__gt=0)
+                    .order_by("data_validade", "id")
+                )
+                for lote in lotes:
+                    if restante <= 0:
+                        break
+                    consumo = min(restante, lote.quantidade)
+                    lote.quantidade -= consumo
+                    lote.save(update_fields=["quantidade", "atualizado_em"])
+                    restante -= consumo
+
+                if restante > 0:
+                    nome_produto = dict(Doacao.Produto.choices).get(produto, produto)
+                    raise ValidationError(
+                        f"Estoque insuficiente para {nome_produto}. Disponível: {item.quantidade}."
+                    )
+
+            item.quantidade -= quantidade
+            if unidade and not item.unidade:
+                item.unidade = unidade
+            item.save(update_fields=["quantidade", "unidade", "atualizado_em"])
+            return item
+
+
+class EstoqueLote(models.Model):
+    produto = models.CharField(max_length=30, choices=Doacao.Produto.choices)
+    quantidade = models.PositiveIntegerField(default=0)
+    unidade = models.CharField(max_length=30, blank=True, default="un")
+    data_validade = models.DateField()
+    doacao = models.ForeignKey(
+        Doacao,
+        on_delete=models.SET_NULL,
+        related_name="lotes_estoque",
+        null=True,
+        blank=True,
+    )
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["data_validade", "produto", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["produto", "unidade", "data_validade"],
+                name="unique_lote_estoque_produto_unidade_validade",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.get_produto_display()} - {self.quantidade} {self.unidade} (val. {self.data_validade:%d/%m/%Y})"
+
+    @property
+    def descricao_alerta(self):
+        if self.doacao and self.doacao.descricao:
+            return self.doacao.descricao
+        return self.get_produto_display()
+
+    @property
+    def dias_para_vencer(self):
+        return (self.data_validade - date.today()).days
+
+    @classmethod
+    def lotes_ativos(cls):
+        return cls.objects.filter(quantidade__gt=0)
+
+    @classmethod
+    def existe_vencido(cls, produto, referencia=None):
+        referencia = referencia or date.today()
+        return cls.lotes_ativos().filter(produto=produto, data_validade__lt=referencia).exists()
+
+    @classmethod
+    def alertas(cls, referencia=None, janela_dias=30):
+        referencia = referencia or date.today()
+        limite = referencia + timedelta(days=janela_dias)
+        base = cls.lotes_ativos().filter(produto__in=Doacao.produtos_pereciveis()).select_related("doacao")
+        proximos = list(
+            base.filter(data_validade__gte=referencia, data_validade__lte=limite).order_by(
+                "data_validade",
+                "produto",
+                "id",
+            )
+        )
+        vencidos = list(base.filter(data_validade__lt=referencia).order_by("data_validade", "produto", "id"))
+        return {"proximos": proximos, "vencidos": vencidos, "referencia": referencia}
+
+
+class AuditoriaEstoqueValidade(models.Model):
+    class Evento(models.TextChoices):
+        BLOQUEIO_DOACAO_VENCIDO = "bloqueio_doacao_vencido", "Bloqueio de doação vencida"
+        REAUTENTICACAO_FALHA = "reauth_falha", "Reautenticação falhou"
+        REAUTENTICACAO_SUCESSO = "reauth_sucesso", "Reautenticação com sucesso"
+        REPASSE_VENCIDO_CONFIRMADO = "repasse_vencido_confirmado", "Repasse vencido confirmado"
+        ALERTA_EMAIL_ENVIADO = "alerta_email_enviado", "Alerta de validade por e-mail enviado"
+        ALERTA_EMAIL_ERRO = "alerta_email_erro", "Erro ao enviar alerta de validade por e-mail"
+
+    evento = models.CharField(max_length=40, choices=Evento.choices)
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="auditorias_validade",
+        null=True,
+        blank=True,
+    )
+    produto = models.CharField(max_length=30, choices=Doacao.Produto.choices, blank=True, default="")
+    data_validade = models.DateField(null=True, blank=True)
+    mensagem = models.CharField(max_length=255)
+    detalhes = models.JSONField(blank=True, default=dict)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-criado_em", "-id"]
+
+    def __str__(self):
+        return f"[{self.get_evento_display()}] {self.mensagem}"
+
+    @classmethod
+    def registrar(
+        cls,
+        *,
+        evento,
+        mensagem,
+        usuario=None,
+        produto="",
+        data_validade=None,
+        detalhes=None,
+    ):
+        return cls.objects.create(
+            evento=evento,
+            usuario=usuario,
+            produto=produto,
+            data_validade=data_validade,
+            mensagem=mensagem,
+            detalhes=detalhes or {},
+        )

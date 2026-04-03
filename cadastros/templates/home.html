@@ -60,7 +60,7 @@
                 <tr>
                   <th>Data</th>
                   <th>Categoria</th>
-                  <th>Doador</th>
+                  <th>Produto</th>
                 </tr>
               </thead>
               <tbody>
@@ -68,7 +68,7 @@
                   <tr>
                     <td>{{ item.data_doacao|date:"d/m/Y" }}</td>
                     <td>{{ item.get_categoria_display }}</td>
-                    <td>{{ item.doador.nome|default:"Não informado" }}</td>
+                    <td>{{ item.get_produto_display }}</td>
                   </tr>
                 {% empty %}
                   <tr><td colspan="3" class="text-muted">Sem doações registradas.</td></tr>
@@ -100,6 +100,34 @@
                   </tr>
                 {% empty %}
                   <tr><td colspan="3" class="text-muted">Sem repasses registrados.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="row g-3 mt-1">
+      <div class="col-12">
+        <div class="card-soft p-3">
+          <h2 class="h5 mb-3">Estoque atual</h2>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in estoque_itens %}
+                  <tr>
+                    <td>{{ item.produto }}</td>
+                    <td>{{ item.quantidade }} {{ item.unidade }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="2" class="text-muted">Sem itens cadastrados em estoque.</td></tr>
                 {% endfor %}
               </tbody>
             </table>

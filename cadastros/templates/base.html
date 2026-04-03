@@ -38,6 +38,7 @@
                 <li class="nav-item"><a class="nav-link" href="{% url 'cadastrar_familia' %}">Famílias</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'doacoes' %}">Doações</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'repasses' %}">Repasses</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'estoque' %}">Estoque</a></li>
                 {% if user.is_superuser %}
                   <li class="nav-item"><a class="nav-link" href="{% url 'cadastro_funcionario' %}">Usuários</a></li>
                 {% endif %}
@@ -82,6 +83,21 @@
           </div>
         </nav>
       </header>
+    {% endif %}
+
+    {% if alerta_validade_global.tem_alerta %}
+      <section class="container mb-3">
+        <article class="alerta-validade-global {% if alerta_validade_global.tem_vencido %}alerta-validade-vencido{% else %}alerta-validade-proximo{% endif %}">
+          <p class="mb-0">
+            <strong>{{ alerta_validade_global.mensagem }}</strong>
+            {% if alerta_validade_global.exibir_link %}
+              <a href="{% url 'alertas_validade' %}" class="alerta-validade-link">
+                {{ alerta_validade_global.texto_acao }}
+              </a>
+            {% endif %}
+          </p>
+        </article>
+      </section>
     {% endif %}
 
     <main class="container pb-5">

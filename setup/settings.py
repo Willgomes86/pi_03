@@ -37,6 +37,16 @@ def env_str(name: str, default: str = "") -> str:
     return value if value else default
 
 
+def env_int(name: str, default: int = 0) -> int:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return int(value.strip())
+    except (TypeError, ValueError):
+        return default
+
+
 load_env_file(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
@@ -93,6 +103,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "cadastros.context_processors.alerta_validade_global",
             ],
         },
     },
@@ -170,6 +181,21 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [
     BASE_DIR / "staticfiles",
 ]
+
+EMAIL_BACKEND = env_str("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = env_str("EMAIL_HOST", "")
+EMAIL_PORT = env_int("EMAIL_PORT", 587)
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", default=True)
+EMAIL_HOST_USER = env_str("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = env_str("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = env_str("DEFAULT_FROM_EMAIL", "noreply@colo-de-mae.local")
+
+ESTOQUE_ALERTA_EMAIL_DESTINATARIOS = [
+    item.strip()
+    for item in env_str("ESTOQUE_ALERTA_EMAIL_DESTINATARIOS", "").split(",")
+    if item.strip()
+]
+ESTOQUE_ALERTA_EMAIL_INTERVALO_HORAS = max(env_int("ESTOQUE_ALERTA_EMAIL_INTERVALO_HORAS", 24), 1)
 
 
 # Default primary key field type

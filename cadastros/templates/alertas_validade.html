@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Alertas de Validade | Colo de Mãe{% endblock %}
+
+{% block content %}
+  <section class="card-soft p-4 mb-4">
+    <h1 class="h4 mb-1">Alertas de Validade</h1>
+    <p class="text-secondary mb-0">
+      Lista completa de produtos perecíveis próximos do vencimento e já vencidos em estoque.
+    </p>
+  </section>
+
+  {% if not alertas.tem_alerta %}
+    <section class="card-soft p-3">
+      <p class="mb-0 text-success fw-semibold">Nenhum produto perecível em faixa de alerta neste momento.</p>
+    </section>
+  {% endif %}
+
+  {% if alertas.vencidos %}
+    <section class="card-soft p-3 mb-3">
+      <h2 class="h5 text-danger mb-3">Produtos vencidos</h2>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Validade</th>
+              <th>Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in alertas.vencidos %}
+              <tr>
+                <td>{{ item.descricao_alerta }}</td>
+                <td class="text-danger fw-semibold">{{ item.data_validade|date:"d/m/Y" }}</td>
+                <td>{{ item.quantidade }} {{ item.unidade }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if alertas.proximos %}
+    <section class="card-soft p-3">
+      <h2 class="h5 mb-3">Próximos do vencimento (até 30 dias)</h2>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Validade</th>
+              <th>Dias restantes</th>
+              <th>Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in alertas.proximos %}
+              <tr>
+                <td>{{ item.descricao_alerta }}</td>
+                <td>{{ item.data_validade|date:"d/m/Y" }}</td>
+                <td>{{ item.dias_para_vencer }}</td>
+                <td>{{ item.quantidade }} {{ item.unidade }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}

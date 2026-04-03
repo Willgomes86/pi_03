@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
@@ -6,6 +7,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.db import transaction
 from django.db.models import DecimalField, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
@@ -13,7 +15,8 @@ from django.shortcuts import redirect, render
 from django.utils.dateparse import parse_date
 
 from .forms import DoacaoForm, FamiliaForm, LoginForm, PerfilForm, RepasseForm
-from .models import Doacao, Familia, Filho, Repasse
+from .models import AuditoriaEstoqueValidade, Doacao, EstoqueItem, EstoqueLote, Familia, Filho, Repasse
+from .validade import obter_alertas_validade, registrar_auditoria_validade
 
 
 def superuser_required(user):
@@ -41,8 +44,24 @@ def _parse_int(value, default=0):
         return default
 
 
+def _estoque_resumo():
+    itens = {item.produto: item for item in EstoqueItem.objects.all()}
+    resumo = []
+    for produto_codigo, produto_nome in EstoqueItem.produtos_controlados():
+        item = itens.get(produto_codigo)
+        resumo.append(
+            {
+                "codigo": produto_codigo,
+                "produto": produto_nome,
+                "quantidade": item.quantidade if item else 0,
+                "unidade": item.unidade if item else "un",
+            }
+        )
+    return resumo
+
+
 def home(request):
-    context = {"indicadores": None, "doacoes_recentes": [], "repasses_recentes": []}
+    context = {"indicadores": None, "doacoes_recentes": [], "repasses_recentes": [], "estoque_itens": []}
 
     if request.user.is_authenticated:
         total_familias = Familia.objects.count()
@@ -72,8 +91,9 @@ def home(request):
             "valor_repassado": valor_repassado,
             "saldo": valor_doado - valor_repassado,
         }
-        context["doacoes_recentes"] = Doacao.objects.select_related("doador").all()[:5]
+        context["doacoes_recentes"] = Doacao.objects.all()[:5]
         context["repasses_recentes"] = Repasse.objects.select_related("familia").all()[:5]
+        context["estoque_itens"] = _estoque_resumo()[:5]
 
     return render(request, "home.html", context)
 
@@ -345,32 +365,174 @@ def doacoes(request):
     form = DoacaoForm(request.POST or None)
     if request.method == "POST":
         if form.is_valid():
-            doacao = form.save(commit=False)
-            doacao.registrada_por = request.user
-            doacao.save()
-            messages.success(request, "Doação registrada com sucesso.")
-            return redirect("doacoes")
+            try:
+                with transaction.atomic():
+                    doacao = form.save(commit=False)
+                    doacao.registrada_por = request.user
+                    doacao.save()
+                    EstoqueItem.registrar_entrada(
+                        produto=doacao.produto,
+                        quantidade=doacao.quantidade,
+                        unidade=doacao.unidade,
+                        data_validade=doacao.data_validade,
+                        doacao=doacao,
+                    )
+                messages.success(request, "Doação registrada com sucesso.")
+                return redirect("doacoes")
+            except ValidationError as exc:
+                form.add_error(None, exc.messages[0])
         messages.error(request, "Não foi possível registrar a doação. Revise os dados.")
 
-    ultimas_doacoes = Doacao.objects.select_related("doador").all()[:20]
-    return render(request, "doacoes.html", {"form": form, "ultimas_doacoes": ultimas_doacoes})
+    ultimas_doacoes = Doacao.objects.all()[:20]
+    return render(
+        request,
+        "doacoes.html",
+        {
+            "form": form,
+            "ultimas_doacoes": ultimas_doacoes,
+            "estoque_itens": _estoque_resumo(),
+            "produtos_pereciveis": list(Doacao.produtos_pereciveis()),
+        },
+    )
+
+
+def _contexto_repasses(form, **extra):
+    contexto = {
+        "form": form,
+        "ultimos_repasses": Repasse.objects.select_related("familia", "doacao").all()[:20],
+        "estoque_itens": _estoque_resumo(),
+        "mostrar_confirmacao_vencido": False,
+        "payload_confirmacao_vencido": [],
+        "produto_bloqueado_nome": "",
+        "data_validade_bloqueada": None,
+    }
+    contexto.update(extra)
+    return contexto
+
+
+def _payload_confirmacao_vencido(post_data):
+    payload = []
+    for chave, valores in post_data.lists():
+        if chave in {"csrfmiddlewaretoken", "confirmar_doacao_vencida", "senha_confirmacao"}:
+            continue
+        for valor in valores:
+            payload.append({"chave": chave, "valor": valor})
+    return payload
 
 
 @login_required(login_url="login")
 def repasses(request):
     form = RepasseForm(request.POST or None)
     if request.method == "POST":
+        confirmar_doacao_vencida = request.POST.get("confirmar_doacao_vencida") == "1"
+        senha_confirmacao = request.POST.get("senha_confirmacao", "").strip()
+
         if form.is_valid():
-            repasse = form.save(commit=False)
-            repasse.responsavel = request.user
-            repasse.save()
-            messages.success(request, "Repasse registrado com sucesso.")
-            return redirect("repasses")
+            try:
+                with transaction.atomic():
+                    repasse = form.save(commit=False)
+                    repasse.responsavel = request.user
+                    permitir_vencido = False
+                    lote_vencido = None
+
+                    if repasse.status == Repasse.Status.ENTREGUE and Doacao.is_produto_perecivel(repasse.produto):
+                        lote_vencido = (
+                            EstoqueLote.lotes_ativos()
+                            .filter(produto=repasse.produto, data_validade__lt=date.today())
+                            .order_by("data_validade", "id")
+                            .first()
+                        )
+                        if lote_vencido and not confirmar_doacao_vencida:
+                            registrar_auditoria_validade(
+                                evento=AuditoriaEstoqueValidade.Evento.BLOQUEIO_DOACAO_VENCIDO,
+                                mensagem="Tentativa bloqueada de repasse com item vencido.",
+                                usuario=request.user,
+                                produto=repasse.produto,
+                                data_validade=lote_vencido.data_validade,
+                                detalhes={"quantidade_solicitada": repasse.quantidade},
+                            )
+                            messages.error(request, "Você está doando produto vencido.")
+                            return render(
+                                request,
+                                "repasses.html",
+                                _contexto_repasses(
+                                    form,
+                                    mostrar_confirmacao_vencido=True,
+                                    payload_confirmacao_vencido=_payload_confirmacao_vencido(request.POST),
+                                    produto_bloqueado_nome=lote_vencido.descricao_alerta,
+                                    data_validade_bloqueada=lote_vencido.data_validade,
+                                ),
+                            )
+
+                        if lote_vencido and confirmar_doacao_vencida:
+                            usuario_confirmado = authenticate(
+                                request,
+                                username=request.user.username,
+                                password=senha_confirmacao,
+                            )
+                            if usuario_confirmado is None:
+                                registrar_auditoria_validade(
+                                    evento=AuditoriaEstoqueValidade.Evento.REAUTENTICACAO_FALHA,
+                                    mensagem="Reautenticação inválida para liberar repasse de produto vencido.",
+                                    usuario=request.user,
+                                    produto=repasse.produto,
+                                    data_validade=lote_vencido.data_validade,
+                                )
+                                messages.error(request, "Você está doando produto vencido.")
+                                form.add_error(None, "Senha inválida para confirmar repasse de produto vencido.")
+                                return render(
+                                    request,
+                                    "repasses.html",
+                                    _contexto_repasses(
+                                        form,
+                                        mostrar_confirmacao_vencido=True,
+                                        payload_confirmacao_vencido=_payload_confirmacao_vencido(request.POST),
+                                        produto_bloqueado_nome=lote_vencido.descricao_alerta,
+                                        data_validade_bloqueada=lote_vencido.data_validade,
+                                    ),
+                                )
+
+                            registrar_auditoria_validade(
+                                evento=AuditoriaEstoqueValidade.Evento.REAUTENTICACAO_SUCESSO,
+                                mensagem="Reautenticação concluída para repasse de produto vencido.",
+                                usuario=request.user,
+                                produto=repasse.produto,
+                                data_validade=lote_vencido.data_validade,
+                                detalhes={"quantidade_solicitada": repasse.quantidade},
+                            )
+                            permitir_vencido = True
+
+                    if repasse.status == Repasse.Status.ENTREGUE:
+                        EstoqueItem.registrar_saida(
+                            produto=repasse.produto,
+                            quantidade=repasse.quantidade,
+                            unidade=repasse.unidade,
+                            permitir_vencido=permitir_vencido,
+                        )
+                    repasse.save()
+                    if permitir_vencido:
+                        registrar_auditoria_validade(
+                            evento=AuditoriaEstoqueValidade.Evento.REPASSE_VENCIDO_CONFIRMADO,
+                            mensagem="Repasse de produto vencido autorizado mediante senha.",
+                            usuario=request.user,
+                            produto=repasse.produto,
+                            data_validade=lote_vencido.data_validade if lote_vencido else None,
+                            detalhes={"repasse_id": repasse.id, "quantidade": repasse.quantidade},
+                        )
+                messages.success(request, "Repasse registrado com sucesso.")
+                return redirect("repasses")
+            except ValidationError as exc:
+                form.add_error(None, exc.messages[0])
         messages.error(request, "Não foi possível registrar o repasse. Revise os dados.")
 
-    ultimos_repasses = Repasse.objects.select_related("familia", "doacao").all()[:20]
-    return render(
-        request,
-        "repasses.html",
-        {"form": form, "ultimos_repasses": ultimos_repasses},
-    )
+    return render(request, "repasses.html", _contexto_repasses(form))
+
+
+@login_required(login_url="login")
+def estoque(request):
+    return render(request, "estoque.html", {"estoque_itens": _estoque_resumo()})
+
+
+@login_required(login_url="login")
+def alertas_validade(request):
+    return render(request, "alertas_validade.html", {"alertas": obter_alertas_validade()})
